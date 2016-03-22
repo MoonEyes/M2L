@@ -27,7 +27,7 @@ def afficherSallesCategorie():
     nomCateg=rowCateg[0].nom
     
     # requête permettant de sélectionner les salles de la catégorie précédemment sélectionnée
-    rowsSalles =db((db.salle.categorie_id==uneCategorie)).select(db.salle.ALL)
+    rowsSalles =db((db.salle.categorie_id==uneCategorie==db.categorie.id)).select(db.salle.ALL,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes,db.categorie.heureFermeture,db.categorie.heureFermetureMinutes,db.categorie.nom, orderby=~db.salle.capacite)
 
     return locals()
 
