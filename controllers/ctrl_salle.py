@@ -180,3 +180,14 @@ def visualiserReservation():
     rowsResa=db((((db.reservation.dateDebut.year() == dateRecherchee.year) & (db.reservation.dateDebut.day() == dateRecherchee.day) & (db.reservation.dateDebut.month() == dateRecherchee.month))|((db.reservation.dateFin.year() == dateRecherchee.year) & (db.reservation.dateFin.day() == dateRecherchee.day) & (db.reservation.dateFin.month() == dateRecherchee.month)))).select(db.reservation.ALL)
     
     return locals()
+@auth.requires_login()
+def visualiserReservation2():
+    """
+    Fournit à la vue la liste des réservations correspondant au nom sélectionnée.
+    """
+    idSalleR = request.vars['salle']
+
+    # requête de sélection des réservations correspondant à la date choisie
+    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)
+    
+    return locals()
