@@ -1,0 +1,431 @@
+(dp1
+S'output'
+p2
+S"<type 'exceptions.TypeError'> 'Field' object is not callable"
+p3
+sS'layer'
+p4
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers/ctrl_salle.py'
+p5
+sS'code'
+p6
+S'# -*- coding: utf-8 -*-\n#------------------------------------------------------------------------------------#\n# afficherLesSalles\n#------------------------------------------------------------------------------------#\ndef afficherLesSalles():\n    """\n    Fournit \xc3\xa0 la vue HTML la liste de toutes les salles avec l\'ensemble des informations\n    """\n    rowsSalles =db(db.salle.categorie_id==db.categorie.id).select(db.salle.capacite,db.categorie.nom,db.salle.id,db.salle.nom,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes) #requ\xc3\xaate permettant de r\xc3\xa9cup\xc3\xa9rer les informations des salles\n    trieSalles =db(db.salle.categorie_id==db.categorie.id).select(db.salle.capacite,db.categorie.nom,db.salle.id,db.salle.nom,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes, orderby=db.categorie.nom|~db.salle.capacite )#requ\xc3\xaate permettant de r\xc3\xa9cup\xc3\xa9rer les informations des salles et les trier par capacit\xc3\xa9 et cat\xc3\xa9gorie\n    \n    return locals()\n\n#------------------------------------------------------------------------------------#\n# afficherSallesCategorie\n#------------------------------------------------------------------------------------#\ndef afficherSallesCategorie():\n    """\n    Fournit \xc3\xa0 la vue la liste des salles dont la categorie a \xc3\xa9t\xc3\xa9 transmise par l\'URL dans la variable Select_categ\n    """\n    #recup\xc3\xa9ration des varaibles transmises par la requ\xc3\xaate HTTP\n    uneCategorie=request.vars.Select_categ\n\n    # requ\xc3\xaate permettant de r\xc3\xa9cup\xc3\xa9rer le nom de la cat\xc3\xa9gorie pr\xc3\xa9c\xc3\xa9demment s\xc3\xa9lectionn\xc3\xa9e\n    rowCateg=db(db.categorie.id==uneCategorie).select(db.categorie.nom,orderby=db.categorie.nom)\n    \n    nomCateg=rowCateg[0].nom\n    \n    # requ\xc3\xaate permettant de s\xc3\xa9lectionner les salles de la cat\xc3\xa9gorie pr\xc3\xa9c\xc3\xa9demment s\xc3\xa9lectionn\xc3\xa9e\n    rowsSalles =db((db.salle.categorie_id==uneCategorie==db.categorie.id)).select(db.salle.ALL,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes,db.categorie.heureFermeture,db.categorie.heureFermetureMinutes,db.categorie.nom, orderby=~db.salle.capacite)\n\n    return locals()\n\n#------------------------------------------------------------------------------------#\n# ajouterSalle\n#------------------------------------------------------------------------------------#\n@auth.requires_login()\ndef ajouterSalle():\n    """\n    Fournit \xc3\xa0 la vue un formulaire d\'ajout de salle\n    """\n    form=SQLFORM(db.salle)    #formulaire reposant sur la structure de la table Salle\n\n    if form.process().accepted:\n        # LE CODE PRESENT DANS CETTE SECTION SERA EXECUT\xc3\x89 SEULEMENT APR\xc3\x88S VALIDATION DU FORMULAIRE\n        # on peut acc\xc3\xa9der aux valeurs renseign\xc3\xa9es dans les champs du formulaire grace \xc3\xa0 la variable : form.vars[nomChamp]\n\n        response.flash=\'Nouvelle salle ins\xc3\xa9r\xc3\xa9e\'        # la salle est automatiquement ajout\xc3\xa9e.\n\n\n        redirect(URL(\'crtl_salle\',\'afficherSallesCategorie\',vars=dict(Select_categ=form.vars.categorie_id)))\n\n    elif form.errors:\n        response.flash=\'Erreurs de saisie\'\n  \n    return locals()\n\n#------------------------------------------------------------------------------------#\n# demanderReservationSalle\n#------------------------------------------------------------------------------------#\ndef demanderReservationSalle():\n    """\n    Fournit \xc3\xa0 la vue un formulaire de demande de r\xc3\xa9servation\n    """\n\n    #cr\xc3\xa9ation du formulaire de reservation\n    form = SQLFORM.factory(\n        Field(\'DateDebut\',\'datetime\',requires=[IS_NOT_EMPTY(),IS_DATETIME(format=T(\'%d-%m-%Y %H:%M\'),\n                       error_message=\'doit \xc3\xaatre au format DD-MM-YYYY HH:MM!\')]),\n        Field(\'DateFin\',\'datetime\', requires=[IS_NOT_EMPTY(),IS_DATETIME(format=T(\'%d-%m-%Y %H:%M\'),\n                       error_message=\'doit \xc3\xaatre au format DD-MM-YYYY HH:MM!\')]),\n        Field(\'Categorie\',db.categorie,requires=IS_IN_DB(db,db.categorie.id,\'%(nom)s\'))\n        ,labels = {\'DateDebut\':\'Date de d\xc3\xa9but \',\'DateFin\':\'Date de fin \',\'NbParticipants\':\'Nombre de participants \'})\n\n\n    if form.validate():\n        # Code ex\xc3\xa9cut\xc3\xa9 \xc3\xa0 la validation du formulaire\n        # redirection vers la page de s\xc3\xa9lection d\'une salle disponible avec transmission des donn\xc3\xa9es du formulaire\n        redirect(URL(\'ctrl_salle\',\'rechercherSalleDisponible\',vars=form.vars))\n\n    elif form.errors:\n        response.flash = \'Le formulaire contient des erreurs\'\n\n    return locals()\n\n#------------------------------------------------------------------------------------#\n# index\n#------------------------------------------------------------------------------------#\ndef index():\n    """\n    Fournit \xc3\xa0 la vue la liste des cat\xc3\xa9gories\n    """\n    rowsCateg =db().select(db.categorie.id,db.categorie.nom)    #requ\xc3\xaate permettant de r\xc3\xa9cup\xc3\xa9rer les id et nom des cat\xc3\xa9gories\n\n    return locals()\n\n#------------------------------------------------------------------------------------#\n# modifierSalle\n#------------------------------------------------------------------------------------#\n@auth.requires_login()\ndef modifierSalle():\n    """\n    Fournit \xc3\xa0 la vue HTML un formulaire de modification d\'une salle dont l\'id est transmis par URL\n    """\n    idSalle = request.vars[\'salle\']    # r\xc3\xa9cup\xc3\xa9ration des variables du formulaire transmises par la r\xc3\xaaquete HTTP\n\n    record = db.salle(idSalle) or redirect(URL(\'ctrl_salle\',\'index\'))\n    form = SQLFORM(db.salle,record,deletable = False)\n\n    if form.process().accepted:\n        # LE CODE PRESENT DANS CETTE SECTION SERA EXECUT\xc3\x89 SEULEMENT APR\xc3\x88S VALIDATION DU FORMULAIRE\n        # on peut acc\xc3\xa9der aux valeurs renseign\xc3\xa9es dans les champs du formulaire grace \xc3\xa0 la variable : form.vars[nomChamp]\n        response.flash = \'Modification enregistr\xc3\xa9e\'\n        redirect(URL(\'ctrl_salle\',\'afficherLesSalles\'))\n\n    elif form.errors:\n        response.flash = \'Le formulaire contient des erreurs\'\n\n    return locals()\n\n\n#------------------------------------------------------------------------------------#\n# rechercherSalleDisponible\n#------------------------------------------------------------------------------------#\ndef rechercherSalleDisponible():\n    """\n    Fournit \xc3\xa0 la vue la liste des salles disponibles \xc3\xa0 partir des donn\xc3\xa9es du formulaire de demande de r\xc3\xa9servation\n    """\n    # r\xc3\xa9cup\xc3\xa9ration des variables du formulaire transmises par la r\xc3\xaaquete HTTP\n    dateDebDdeR = request.vars[\'DateDebut\']\n    dateFinDdeR = request.vars[\'DateFin\']\n    categSalleRecherchee = request.vars[\'Categorie\']\n\n\n    #les salles disponibles sont :\n    # celles qui appartiennent \xc3\xa0 la cat\xc3\xa9gorie recherch\xc3\xa9e\n    # qui ont des heures d\'ouverture et de fermeture adapt\xc3\xa9s  \n    # et qui sont libres pour la p\xc3\xa9riode de r\xc3\xa9servation demand\xc3\xa9e\n\n    # r\xc3\xa9alisation d\'une sous-requ\xc3\xaate : les salles qui sont libres pour la p\xc3\xa9riode de r\xc3\xa9servation demand\xc3\xa9e\n    rowsSallesDispo1 = db((((db.reservation.dateDebut<dateDebDdeR) & (db.reservation.dateFin>dateDebDdeR))|((db.reservation.dateDebut<dateFinDdeR)&(db.reservation.dateFin>dateFinDdeR))))._select(db.reservation.salle_id)\n\n    #rowsSallesDispo =db(~db.salle.id.belongs(rowsSallesDispo1)).select(db.salle.id,db.salle.nom,db.salle.capacite,distinct=True)\n    rowsSallesDispo=db((~db.salle.id.belongs(rowsSallesDispo1))).select(db.salle.id,db.salle.nom,db.salle.capacite,distinct=True)\n\n   \n    return locals()\n\n#------------------------------------------------------------------------------------#\n# reserver\n#------------------------------------------------------------------------------------#\ndef reserver():\n    """\n    Permet d\'enregistrer la r\xc3\xa9servation.\n    """\n    # r\xc3\xa9cup\xc3\xa9ration des variables du formulaire transmises par la r\xc3\xaaquete HTTP\n    dateDebR = request.vars[\'dateDR\']\n    dateFinR = request.vars[\'dateFR\']\n    idSalleR = request.vars[\'salle\']\n\n    #insertion des donn\xc3\xa9es\n    db.reservation.insert(dateDebut=dateDebR,dateFin=dateFinR,salle_id=idSalleR)\n    # message de retour \xc3\xa0 afficher\n    message = \'Votre r\xc3\xa9servation est enregistr\xc3\xa9e.\'\n\n    return locals()\n\n#------------------------------------------------------------------------------------#\n# visualiserReservation\n#------------------------------------------------------------------------------------#\n@auth.requires_login()\ndef visualiserReservation():\n    """\n    Fournit \xc3\xa0 la vue la liste des r\xc3\xa9servations correspondant \xc3\xa0 la date s\xc3\xa9lectionn\xc3\xa9e.\n    """\n    from datetime import datetime\n    dateRecherchee = datetime.strptime(request.vars[\'date\'],"%d-%m-%Y") # transformation en datetime de la chaine de caract\xc3\xa8re transmise via URL\n\n    # requ\xc3\xaate de s\xc3\xa9lection des r\xc3\xa9servations correspondant \xc3\xa0 la date choisie\n    rowsResa=db((((db.reservation.dateDebut.year() == dateRecherchee.year) & (db.reservation.dateDebut.day() == dateRecherchee.day) & (db.reservation.dateDebut.month() == dateRecherchee.month))|((db.reservation.dateFin.year() == dateRecherchee.year) & (db.reservation.dateFin.day() == dateRecherchee.day) & (db.reservation.dateFin.month() == dateRecherchee.month)))).select(db.reservation.ALL)\n    \n    return locals()\n@auth.requires_login()\ndef visualiserReservation2():\n    """\n    Fournit \xc3\xa0 la vue la liste des r\xc3\xa9servations correspondant au nom s\xc3\xa9lectionn\xc3\xa9e.\n    """\n    idSalleR = request.vars[\'salle\']\n\n    # requ\xc3\xaate de s\xc3\xa9lection des r\xc3\xa9servations correspondant \xc3\xa0 la date choisie\n    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)\n    \n    return locals()\nresponse._vars=response._caller(visualiserReservation2)\n'
+p7
+sS'snapshot'
+p8
+(dp9
+S'exception'
+p10
+(dp11
+S'__hash__'
+p12
+S"<method-wrapper '__hash__' of exceptions.TypeError object>"
+p13
+sS'__setattr__'
+p14
+S"<method-wrapper '__setattr__' of exceptions.TypeError object>"
+p15
+sS'__reduce_ex__'
+p16
+S'<built-in method __reduce_ex__ of exceptions.TypeError object>'
+p17
+sS'__getslice__'
+p18
+S"<method-wrapper '__getslice__' of exceptions.TypeError object>"
+p19
+sS'__getitem__'
+p20
+S"<method-wrapper '__getitem__' of exceptions.TypeError object>"
+p21
+sS'__setstate__'
+p22
+S'<built-in method __setstate__ of exceptions.TypeError object>'
+p23
+sS'__reduce__'
+p24
+S'<built-in method __reduce__ of exceptions.TypeError object>'
+p25
+sS'__str__'
+p26
+S"<method-wrapper '__str__' of exceptions.TypeError object>"
+p27
+sS'__format__'
+p28
+S'<built-in method __format__ of exceptions.TypeError object>'
+p29
+sS'__getattribute__'
+p30
+S"<method-wrapper '__getattribute__' of exceptions.TypeError object>"
+p31
+sS'__class__'
+p32
+S"<type 'exceptions.TypeError'>"
+p33
+sS'__unicode__'
+p34
+S'<built-in method __unicode__ of exceptions.TypeError object>'
+p35
+sS'__delattr__'
+p36
+S"<method-wrapper '__delattr__' of exceptions.TypeError object>"
+p37
+sS'__subclasshook__'
+p38
+S'<built-in method __subclasshook__ of type object>'
+p39
+sS'__repr__'
+p40
+S"<method-wrapper '__repr__' of exceptions.TypeError object>"
+p41
+sS'args'
+p42
+S'("\'Field\' object is not callable",)'
+p43
+sS'__dict__'
+p44
+S'{}'
+p45
+sS'__sizeof__'
+p46
+S'<built-in method __sizeof__ of exceptions.TypeError object>'
+p47
+sS'__doc__'
+p48
+S"'Inappropriate argument type.'"
+p49
+sS'__init__'
+p50
+S"<method-wrapper '__init__' of exceptions.TypeError object>"
+p51
+sS'__new__'
+p52
+S'<built-in method __new__ of type object>'
+p53
+ssS'evalue'
+p54
+S"'Field' object is not callable"
+p55
+sS'request'
+p56
+cgluon.html
+XML_unpickle
+p57
+(S's\xed`\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">ajax</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">application</td><td style="vertical-align:top;">:</td><td><div>m2l</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cid</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">client</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">controller</td><td style="vertical-align:top;">:</td><td><div>ctrl_salle</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cookies</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">session_id_admin</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-2894cb33-760e-4453-8f32-f5a0f40501a6<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_m2l</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_welcome</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-9119eabb-63fe-4b7b-8bad-5e4e8505a3c4<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">env</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT</td><td style="vertical-align:top;">:</td><td><div>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT_ENCODING</td><td style="vertical-align:top;">:</td><td><div>gzip, deflate, sdch</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT_LANGUAGE</td><td style="vertical-align:top;">:</td><td><div>fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_CONNECTION</td><td style="vertical-align:top;">:</td><td><div>keep-alive</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_COOKIE</td><td style="vertical-align:top;">:</td><td><div>recent=[&quot;C:/Users/User/Desktop&quot;]; session_id_welcome=127.0.0.1-9119eabb-63fe-4b7b-8bad-5e4e8505a3c4; session_id_admin=127.0.0.1-2894cb33-760e-4453-8f32-f5a0f40501a6; session_id_m2l=127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_HOST</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_REFERER</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000/m2l/ctrl_salle/afficherLesSalles</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_UPGRADE_INSECURE_REQUESTS</td><td style="vertical-align:top;">:</td><td><div>1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_USER_AGENT</td><td style="vertical-align:top;">:</td><td><div>Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">PATH_INFO</td><td style="vertical-align:top;">:</td><td><div>/m2l/ctrl_salle/visualiserReservation2</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">QUERY_STRING</td><td style="vertical-align:top;">:</td><td><div>salle=5</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REMOTE_ADDR</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REMOTE_PORT</td><td style="vertical-align:top;">:</td><td><div>61862</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REQUEST_METHOD</td><td style="vertical-align:top;">:</td><td><div>GET</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SCRIPT_NAME</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_NAME</td><td style="vertical-align:top;">:</td><td><div>User-PC</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_PORT</td><td style="vertical-align:top;">:</td><td><div>8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_PROTOCOL</td><td style="vertical-align:top;">:</td><td><div>HTTP/1.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_SOFTWARE</td><td style="vertical-align:top;">:</td><td><div>Rocket 1.2.6</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">app_folders</td><td style="vertical-align:top;">:</td><td><div>set([&#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\M2L\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\admin\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\m2l\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\welcome\\\\&#x27;])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">applications_parent</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_options</td><td style="vertical-align:top;">:</td><td><div>&lt;Values at 0x31e07d8: {&#x27;verbose&#x27;: False, &#x27;ip&#x27;: &#x27;127.0.0.1&#x27;, &#x27;debuglevel&#x27;: 30, &#x27;with_scheduler&#x27;: False, &#x27;ips&#x27;: [&#x27;172.16.4.144&#x27;, &#x27;fe80::ed4f:442c:e12a:6dab%17&#x27;, &#x27;25.2.70.105&#x27;, &#x27;2620:9b::1902:4669&#x27;, &#x27;fe80::2d33:b054:78e7:86a9%2&#x27;], &#x27;shutdown_timeout&#x27;: 5, &#x27;taskbar&#x27;: False, &#x27;with_coverage&#x27;: False, &#x27;scheduler_groups&#x27;: None, &#x27;port&#x27;: 8000, &#x27;maxthreads&#x27;: None, &#x27;softcron&#x27;: False, &#x27;server_name&#x27;: &#x27;User-PC&#x27;, &#x27;bpython&#x27;: False, &#x27;nogui&#x27;: False, &#x27;pid_filename&#x27;: &#x27;httpserver.pid&#x27;, &#x27;print_errors&#x27;: False, &#x27;extcron&#x27;: False, &#x27;runcron&#x27;: False, &#x27;run_system_tests&#x27;: False, &#x27;test&#x27;: None, &#x27;folder&#x27;: &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py&#x27;, &#x27;config&#x27;: &#x27;&#x27;, &#x27;minthreads&#x27;: None, &#x27;shell&#x27;: None, &#x27;run&#x27;: &#x27;&#x27;, &#x27;log_filename&#x27;: &#x27;httpserver.log&#x27;, &#x27;profiler_dir&#x27;: None, &#x27;args&#x27;: [&#x27;&#x27;], &#x27;socket_timeout&#x27;: 5, &#x27;ssl_ca_certificate&#x27;: None, &#x27;scheduler&#x27;: None, &#x27;interfaces&#x27;: None, &#x27;ssl_private_key&#x27;: &#x27;&#x27;, &#x27;gae&#x27;: None, &#x27;password&#x27;: &#x27;&lt;ask&gt;&#x27;, &#x27;request_queue_size&#x27;: 5, &#x27;ssl_certificate&#x27;: &#x27;&#x27;, &#x27;cronjob&#x27;: False, &#x27;numthreads&#x27;: None, &#x27;quiet&#x27;: False, &#x27;import_models&#x27;: False, &#x27;timeout&#x27;: 10, &#x27;plain&#x27;: False, &#x27;nobanner&#x27;: False}&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">db_sessions</td><td style="vertical-align:top;">:</td><td><div>set([])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">debugging</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">gluon_parent</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept</td><td style="vertical-align:top;">:</td><td><div>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept_encoding</td><td style="vertical-align:top;">:</td><td><div>gzip, deflate, sdch</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept_language</td><td style="vertical-align:top;">:</td><td><div>fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_connection</td><td style="vertical-align:top;">:</td><td><div>keep-alive</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_cookie</td><td style="vertical-align:top;">:</td><td><div>recent=[&quot;C:/Users/User/Desktop&quot;]; session_id_welcome=127.0.0.1-9119eabb-63fe-4b7b-8bad-5e4e8505a3c4; session_id_admin=127.0.0.1-2894cb33-760e-4453-8f32-f5a0f40501a6; session_id_m2l=127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_host</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_referer</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000/m2l/ctrl_salle/afficherLesSalles</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_upgrade_insecure_requests</td><td style="vertical-align:top;">:</td><td><div>1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_user_agent</td><td style="vertical-align:top;">:</td><td><div>Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_jython</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_pypy</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_source</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">local_hosts</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>2620:9b::1902:4669</div></td></tr><tr><td><div>fe80::ed4f:442c:e12a:6dab%17</div></td></tr><tr><td><div>::ffff:127.0.0.1</div></td></tr><tr><td><div>::1</div></td></tr><tr><td><div>172.16.4.144</div></td></tr><tr><td><div>fe80::2d33:b054:78e7:86a9%2</div></td></tr><tr><td><div>User-PC</div></td></tr><tr><td><div>127.0.0.1</div></td></tr><tr><td><div>25.2.70.105</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path_info</td><td style="vertical-align:top;">:</td><td><div>/m2l/ctrl_salle/visualiserReservation2</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">query_string</td><td style="vertical-align:top;">:</td><td><div>salle=5</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remote_addr</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remote_port</td><td style="vertical-align:top;">:</td><td><div>61862</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">request_method</td><td style="vertical-align:top;">:</td><td><div>GET</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">request_uri</td><td style="vertical-align:top;">:</td><td><div>/m2l/ctrl_salle/visualiserReservation2?salle=5</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">script_name</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_name</td><td style="vertical-align:top;">:</td><td><div>User-PC</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_port</td><td style="vertical-align:top;">:</td><td><div>8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_protocol</td><td style="vertical-align:top;">:</td><td><div>HTTP/1.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_software</td><td style="vertical-align:top;">:</td><td><div>Rocket 1.2.6</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_path</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_version</td><td style="vertical-align:top;">:</td><td><div>2.13.4-stable+timestamp.2015.12.26.04.59.39</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.errors</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;&lt;stderr&gt;&#x27;, mode &#x27;w&#x27; at 0x022AD0D0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.file_wrapper</td><td style="vertical-align:top;">:</td><td><div>&lt;class wsgiref.util.FileWrapper at 0x026AE148&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.input</td><td style="vertical-align:top;">:</td><td><div>&lt;socket._fileobject object at 0x04D9E370&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.multiprocess</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.multithread</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.run_once</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.url_scheme</td><td style="vertical-align:top;">:</td><td><div>http</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.version</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>1</div></td></tr><tr><td><div>0</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_errors</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;&lt;stderr&gt;&#x27;, mode &#x27;w&#x27; at 0x022AD0D0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_file_wrapper</td><td style="vertical-align:top;">:</td><td><div>&lt;class wsgiref.util.FileWrapper at 0x026AE148&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_input</td><td style="vertical-align:top;">:</td><td><div>&lt;socket._fileobject object at 0x04D9E370&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_multiprocess</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_multithread</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_run_once</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_url_scheme</td><td style="vertical-align:top;">:</td><td><div>http</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_version</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>1</div></td></tr><tr><td><div>0</div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">extension</td><td style="vertical-align:top;">:</td><td><div>html</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">folder</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">function</td><td style="vertical-align:top;">:</td><td><div>visualiserReservation2</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">global_settings</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">app_folders</td><td style="vertical-align:top;">:</td><td><div>set([&#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\M2L\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\admin\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\m2l\\\\&#x27;, &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\welcome\\\\&#x27;])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">applications_parent</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_options</td><td style="vertical-align:top;">:</td><td><div>&lt;Values at 0x31e07d8: {&#x27;verbose&#x27;: False, &#x27;ip&#x27;: &#x27;127.0.0.1&#x27;, &#x27;debuglevel&#x27;: 30, &#x27;with_scheduler&#x27;: False, &#x27;ips&#x27;: [&#x27;172.16.4.144&#x27;, &#x27;fe80::ed4f:442c:e12a:6dab%17&#x27;, &#x27;25.2.70.105&#x27;, &#x27;2620:9b::1902:4669&#x27;, &#x27;fe80::2d33:b054:78e7:86a9%2&#x27;], &#x27;shutdown_timeout&#x27;: 5, &#x27;taskbar&#x27;: False, &#x27;with_coverage&#x27;: False, &#x27;scheduler_groups&#x27;: None, &#x27;port&#x27;: 8000, &#x27;maxthreads&#x27;: None, &#x27;softcron&#x27;: False, &#x27;server_name&#x27;: &#x27;User-PC&#x27;, &#x27;bpython&#x27;: False, &#x27;nogui&#x27;: False, &#x27;pid_filename&#x27;: &#x27;httpserver.pid&#x27;, &#x27;print_errors&#x27;: False, &#x27;extcron&#x27;: False, &#x27;runcron&#x27;: False, &#x27;run_system_tests&#x27;: False, &#x27;test&#x27;: None, &#x27;folder&#x27;: &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py&#x27;, &#x27;config&#x27;: &#x27;&#x27;, &#x27;minthreads&#x27;: None, &#x27;shell&#x27;: None, &#x27;run&#x27;: &#x27;&#x27;, &#x27;log_filename&#x27;: &#x27;httpserver.log&#x27;, &#x27;profiler_dir&#x27;: None, &#x27;args&#x27;: [&#x27;&#x27;], &#x27;socket_timeout&#x27;: 5, &#x27;ssl_ca_certificate&#x27;: None, &#x27;scheduler&#x27;: None, &#x27;interfaces&#x27;: None, &#x27;ssl_private_key&#x27;: &#x27;&#x27;, &#x27;gae&#x27;: None, &#x27;password&#x27;: &#x27;&lt;ask&gt;&#x27;, &#x27;request_queue_size&#x27;: 5, &#x27;ssl_certificate&#x27;: &#x27;&#x27;, &#x27;cronjob&#x27;: False, &#x27;numthreads&#x27;: None, &#x27;quiet&#x27;: False, &#x27;import_models&#x27;: False, &#x27;timeout&#x27;: 10, &#x27;plain&#x27;: False, &#x27;nobanner&#x27;: False}&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">db_sessions</td><td style="vertical-align:top;">:</td><td><div>set([])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">debugging</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">gluon_parent</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_jython</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_pypy</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_source</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">local_hosts</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>2620:9b::1902:4669</div></td></tr><tr><td><div>fe80::ed4f:442c:e12a:6dab%17</div></td></tr><tr><td><div>::ffff:127.0.0.1</div></td></tr><tr><td><div>::1</div></td></tr><tr><td><div>172.16.4.144</div></td></tr><tr><td><div>fe80::2d33:b054:78e7:86a9%2</div></td></tr><tr><td><div>User-PC</div></td></tr><tr><td><div>127.0.0.1</div></td></tr><tr><td><div>25.2.70.105</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_version</td><td style="vertical-align:top;">:</td><td><div>2.13.4-stable+timestamp.2015.12.26.04.59.39</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_https</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_local</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_restful</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_scheduler</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_shell</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">now</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2016, 3, 22, 16, 9, 17, 364000)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">raw_args</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">raw_extension</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">url</td><td style="vertical-align:top;">:</td><td><div>/m2l/ctrl_salle/visualiserReservation2</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">utcnow</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2016, 3, 22, 15, 9, 17, 364000)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi</td><td style="vertical-align:top;">:</td><td><div>&lt;gluon.main.LazyWSGI object at 0x04B855D0&gt;</div></td></tr></table></div>'
+tRp58
+sS'frames'
+p59
+(lp60
+(dp61
+S'file'
+p62
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\restricted.py'
+p63
+sS'dump'
+p64
+(dp65
+S'environment'
+p66
+S"{'A': <class 'gluon.html.A'>, 'ANY_OF': <class 'gluon.validators.ANY_OF'>, 'ASSIGNJS': <function ASSIGNJS>, 'AppConfig': <function AppConfig>, 'Auth': <class 'gluon.tools.Auth'>, 'B': <class 'gluon.html.B'>, 'BEAUTIFY': <class 'gluon.html.BEAUTIFY'>, 'BODY': <class 'gluon.html.BODY'>, 'BR': <class 'gluon.html.BR'>, 'BUTTON': <class 'gluon.html.BUTTON'>, ...}"
+p67
+sS'ccode'
+p68
+S'<code object <module> at 0454EA40, file "C:\\User...lications\\m2l\\controllers/ctrl_salle.py", line 5>'
+p69
+ssS'lnum'
+p70
+I227
+sS'lines'
+p71
+(dp72
+I224
+S'            ccode = code'
+p73
+sI225
+S'        else:'
+p74
+sI226
+S'            ccode = compile2(code, layer)'
+p75
+sI227
+S'        exec ccode in environment'
+p76
+sI228
+S'    except HTTP:'
+p77
+sI229
+S'        raise'
+p78
+sI230
+S'    except RestrictedError:'
+p79
+sI231
+S'        # do not encapsulate (obfuscate) the original RestrictedError'
+p80
+sI222
+S'    try:'
+p81
+sI223
+S'        if isinstance(code, types.CodeType):'
+p82
+ssS'call'
+p83
+S"(code='# -*- coding: utf-8 -*-\\n#-----------------------...e._vars=response._caller(visualiserReservation2)\\n', environment={'A': <class 'gluon.html.A'>, 'ANY_OF': <class 'gluon.validators.ANY_OF'>, 'ASSIGNJS': <function ASSIGNJS>, 'AppConfig': <function AppConfig>, 'Auth': <class 'gluon.tools.Auth'>, 'B': <class 'gluon.html.B'>, 'BEAUTIFY': <class 'gluon.html.BEAUTIFY'>, 'BODY': <class 'gluon.html.BODY'>, 'BR': <class 'gluon.html.BR'>, 'BUTTON': <class 'gluon.html.BUTTON'>, ...}, layer=r'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers/ctrl_salle.py')"
+p84
+sS'func'
+p85
+S'restricted'
+p86
+sa(dp87
+g62
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers\\ctrl_salle.py'
+p88
+sg64
+(dp89
+sg70
+I194
+sg71
+(dp90
+I192
+S''
+sI193
+S'    return locals()'
+p91
+sI184
+S'def visualiserReservation2():'
+p92
+sI185
+S'    """'
+p93
+sI186
+S'    Fournit \xc3\xa0 la vue la liste des r\xc3\xa9servations correspondant au nom s\xc3\xa9lectionn\xc3\xa9e.'
+p94
+sI187
+S'    """'
+p95
+sI188
+S"    idSalleR = request.vars['salle']"
+p96
+sI189
+S''
+sI190
+S'    # requ\xc3\xaate de s\xc3\xa9lection des r\xc3\xa9servations correspondant \xc3\xa0 la date choisie'
+p97
+sI191
+S'    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)'
+p98
+ssg83
+S'()'
+p99
+sg85
+S'<module>'
+p100
+sa(dp101
+g62
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\globals.py'
+p102
+sg64
+(dp103
+S'self'
+p104
+S'undefined'
+p105
+sS'f'
+S'<function visualiserReservation2>'
+p106
+ssg70
+I412
+sg71
+(dp107
+I416
+S"        self.generic_patterns = ['*']"
+p108
+sI407
+S"        self.flash = ''            # used by the default view layout"
+p109
+sI408
+S'        self.meta = Storage()      # used by web2py_ajax.html'
+p110
+sI409
+S'        self.menu = []             # used by the default view layout'
+p111
+sI410
+S'        self.files = []            # used by web2py_ajax.html'
+p112
+sI411
+S'        self._vars = None'
+p113
+sI412
+S'        self._caller = lambda f: f()'
+p114
+sI413
+S'        self._view_environment = None'
+p115
+sI414
+S'        self._custom_commit = None'
+p116
+sI415
+S'        self._custom_rollback = None'
+p117
+ssg83
+S'(f=<function visualiserReservation2>)'
+p118
+sg85
+S'<lambda>'
+p119
+sa(dp120
+g62
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\tools.py'
+p121
+sg64
+(dp122
+S'action'
+p123
+S'<function visualiserReservation2>'
+p124
+sS'a'
+S'()'
+p125
+sS'b'
+g45
+ssg70
+I4236
+sg71
+(dp126
+I4231
+S'                    flag = condition'
+p127
+sI4232
+S'                if not flag:'
+p128
+sI4233
+S'                    current.session.flash = self.messages.access_denied'
+p129
+sI4234
+S'                    return call_or_redirect('
+p130
+sI4235
+S'                        self.settings.on_failed_authorization)'
+p131
+sI4236
+S'                return action(*a, **b)'
+p132
+sI4237
+S'            f.__doc__ = action.__doc__'
+p133
+sI4238
+S'            f.__name__ = action.__name__'
+p134
+sI4239
+S'            f.__dict__.update(action.__dict__)'
+p135
+sI4240
+S'            return f'
+p136
+ssg83
+S'(*a=(), **b={})'
+p137
+sg85
+S'f'
+sa(dp138
+g62
+S'C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers\\ctrl_salle.py'
+p139
+sg64
+(dp140
+S'rowsResa'
+p141
+g105
+sS').select'
+p142
+g105
+sS'db.reservation.ALL'
+p143
+S'<pydal.helpers.classes.SQLALL object>'
+p144
+sS'db.reservation'
+p145
+S'<Table reservation (id,etat,dateDebut,dateFin,salle_id)>'
+p146
+sS'db.reservation.nom'
+p147
+g105
+sS'idSalleR'
+p148
+S"'5'"
+p149
+sS'global db'
+p150
+S'<DAL uri="sqlite://storage.sqlite">'
+p151
+ssg70
+I191
+sg71
+(dp152
+I192
+S''
+sI193
+S'    return locals()'
+p153
+sI184
+S'def visualiserReservation2():'
+p154
+sI185
+S'    """'
+p155
+sI186
+S'    Fournit \xc3\xa0 la vue la liste des r\xc3\xa9servations correspondant au nom s\xc3\xa9lectionn\xc3\xa9e.'
+p156
+sI187
+S'    """'
+p157
+sI188
+S"    idSalleR = request.vars['salle']"
+p158
+sI189
+S''
+sI190
+S'    # requ\xc3\xaate de s\xc3\xa9lection des r\xc3\xa9servations correspondant \xc3\xa0 la date choisie'
+p159
+sI191
+S'    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)'
+p160
+ssg83
+S'()'
+p161
+sg85
+S'visualiserReservation2'
+p162
+sasS'pyver'
+p163
+S'Python 2.7.9: C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\web2py.exe (prefix: )'
+p164
+sS'session'
+p165
+g57
+(S's\x8d\t\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">auth</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">expiration</td><td style="vertical-align:top;">:</td><td><div>3600</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">hmac_key</td><td style="vertical-align:top;">:</td><td><div>d475dd18-9009-4c78-8754-f056eeb375f0</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_visit</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2016, 3, 22, 16, 9, 17, 364000)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remember_me</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">user</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">email</td><td style="vertical-align:top;">:</td><td><div>cedricmart8@gmail.com</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">first_name</td><td style="vertical-align:top;">:</td><td><div>Cedric</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">id</td><td style="vertical-align:top;">:</td><td><div>7L</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_name</td><td style="vertical-align:top;">:</td><td><div>MARTIN</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">registration_id</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">registration_key</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">reset_password_key</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">user_groups</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">flash</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_orderby</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_query</td><td style="vertical-align:top;">:</td><td><div>db.auth_user.id&gt;0</div></td></tr></table></div>'
+tRp166
+sS'etype'
+p167
+S"<type 'exceptions.TypeError'>"
+p168
+sS'date'
+p169
+S'Tue Mar 22 16:09:17 2016'
+p170
+sS'response'
+p171
+g57
+(S's\x06!\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">body</td><td style="vertical-align:top;">:</td><td><div>&lt;cStringIO.StringO object at 0x04B85FA0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cookies</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">session_id_m2l</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div>/</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">delimiters</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>{{</div></td></tr><tr><td><div>}}</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">files</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">flash</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">form_label_separator</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">formstyle</td><td style="vertical-align:top;">:</td><td><div>bootstrap3_inline</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">generic_patterns</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>*</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">google_analytics_id</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">headers</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">X-Powered-By</td><td style="vertical-align:top;">:</td><td><div>web2py</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">logo</td><td style="vertical-align:top;">:</td><td><div>M2L</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">menu</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div><table><tr><td><div>Accueil</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/m2l/default/index</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr><tr><td><div><table><tr><td><div>Nos ligues</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/m2l/ctrl_ligue/index</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr><tr><td><div><table><tr><td><div>Actualit\xc3\xa9s sportives de la presse</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/m2l/default/index</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr><tr><td><div><table><tr><td><div>Intranet</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/m2l/default/index</div></td></tr><tr><td><div><table><tr><td><div><table><tr><td><div>R\xc3\xa9servation de salles</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/m2l/ctrl_salle/index</div></td></tr><tr><td><div>[]</div></td></tr></table></div></td></tr></table></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">meta</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">author</td><td style="vertical-align:top;">:</td><td><div>Maelle Taurand</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">description</td><td style="vertical-align:top;">:</td><td><div>Portail de la maison des Ligues de Lorraine</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">generator</td><td style="vertical-align:top;">:</td><td><div>Portail de la maison des Ligues de Lorraine</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">keywords</td><td style="vertical-align:top;">:</td><td><div>Ligues, Lorraine, Sport</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">models_to_run</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>^\\w+\\.py$</div></td></tr><tr><td><div>^ctrl_salle/\\w+\\.py$</div></td></tr><tr><td><div>^ctrl_salle/visualiserReservation2/\\w+\\.py$</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">postprocessing</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_client</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_compression_level</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_expires</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_key</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_data_name</td><td style="vertical-align:top;">:</td><td><div>session_data_m2l</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_file</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;C:\\\\Users\\\\User\\\\Desktop\\\\BTS\\\\PPE2\\\\web2py\\\\applications\\\\m2l\\\\sessions\\\\0c5\\\\08b\\\\127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14&#x27;, mode &#x27;rb+&#x27; at 0x04DB3C80&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_filename</td><td style="vertical-align:top;">:</td><td><div>C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\sessions\\127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_hash</td><td style="vertical-align:top;">:</td><td><div>ba556fcd01b832bb86f530bed164bc7e</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-b82b7e81-e48b-40fc-8d11-d2b65b61ef14</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_name</td><td style="vertical-align:top;">:</td><td><div>session_id_m2l</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_locked</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_masterapp</td><td style="vertical-align:top;">:</td><td><div>m2l</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_new</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_storage_type</td><td style="vertical-align:top;">:</td><td><div>file</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">status</td><td style="vertical-align:top;">:</td><td><div>200</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">subtitle</td><td style="vertical-align:top;">:</td><td><div>Maison des Ligues de Lorraine</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">title</td><td style="vertical-align:top;">:</td><td><div>M2L</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">view</td><td style="vertical-align:top;">:</td><td><div>ctrl_salle/visualiserReservation2.html</div></td></tr></table></div>'
+tRp172
+sS'locals'
+p173
+(dp174
+S'idSalleR'
+p175
+S"'5'"
+p176
+sssS'traceback'
+p177
+S'Traceback (most recent call last):\n  File "C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\restricted.py", line 227, in restricted\n    exec ccode in environment\n  File "C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers/ctrl_salle.py", line 194, in <module>\n  File "C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\globals.py", line 412, in <lambda>\n    self._caller = lambda f: f()\n  File "C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\gluon\\tools.py", line 4236, in f\n    return action(*a, **b)\n  File "C:\\Users\\User\\Desktop\\BTS\\PPE2\\web2py\\applications\\m2l\\controllers/ctrl_salle.py", line 191, in visualiserReservation2\n    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)\nTypeError: \'Field\' object is not callable\n'
+p178
+s.
