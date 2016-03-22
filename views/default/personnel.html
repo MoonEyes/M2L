@@ -1,0 +1,64 @@
+{{left_sidebar_enabled,right_sidebar_enabled=False,('message' in globals())}}
+{{extend 'layout.html'}}
+
+{{if 'message' in globals():}}
+<h3>{{=message}}</h3>
+
+{{elif 'content' in globals():}}
+{{=content}}
+{{else:}}
+{{=BEAUTIFY(response._vars)}}
+{{pass}}
+
+<div class="row">
+	<div class="col-lg-12 text-center"><h3 class="text-center">{{=B('Notre personnel très qualifié')}}</h3><hr/></div>
+</div>
+<div class="row">
+	<div class="col-lg-4"></div>
+	<div class="col-lg-2 text-center">
+	<h3 class="text-center">{{=B('Réseau')}}</h3><hr/>
+	<img src="{{=URL('static','images/MoonEyes.png')}}" alt="img perso" width="100%"/>
+		<h4>{{=B('Ducoincoin')}} Benjamin</h4>
+		<p>Scrum Master</p>
+		<hr/>
+		<img src="{{=URL('static','images/default.png')}}" alt="img perso" width="100%"/>
+		<h4>{{=B('Skinner')}} Charlie</h4>
+		<p>DevOps</p>
+	</div>
+	<div class="col-lg-2 text-center">
+	<h3 class="text-center">{{=B('Developpeurs')}}</h3><hr/>
+		<img src="{{=URL('static','images/cefjic.png')}}" alt="img perso" width="100%"/>
+		<h4>{{=B('Baron')}} Arthur</h4>
+		<p>Sous-chef</p>
+		<hr/>
+		<img src="{{=URL('static','images/mardjeenal.png')}}" alt="img perso" width="100%"/>
+		<h4>{{=B('Bourreau')}} Etienne</h4>
+		<p>Developpeur</p>
+		<hr/>
+		<img src="{{=URL('static','images/cedricmart8.png')}}" alt="img perso" width="100%"/>
+		<h4>{{=B('Martin')}} Cedric</h4>
+		<p>Developpeur</p>
+		<hr/>
+	</div>
+	<div class="col-lg-4"></div>
+</div>
+
+{{block right_sidebar}}
+<div class="panel panel-info">
+  <div class="panel-heading"><h3 class="panel-title"><a class="btn-block"
+      href="{{=URL('default','index')}}">
+       {{=T("Présentation")}}
+    </a></h3></div>
+  <div class="panel-body">
+    <i>{{=T("Informations sur la M2L")}}</i>
+  </div>
+  <ul class="list-group">
+    <li class="list-group-item">{{=A("Services Proposés", _href=URL('default','index'))}}</li>
+    <li class="list-group-item">{{=A("Nos locaux", _href=URL('default','index'))}}</li>
+    <li class="list-group-item">{{=A("Parc informatique", _href=URL('default','index'))}}</li>
+    <li class="list-group-item">{{=A("Satut juridique", _href=URL('default','statutJuridique'))}}</li>
+    <li class="list-group-item">{{=A("Contact", _href=URL('default','index'))}}</li>
+
+  </ul>
+</div>
+{{end}}
