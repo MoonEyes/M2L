@@ -347,3 +347,118 @@ CREATE TABLE ligue(
     idDiscipline INTEGER REFERENCES discipline (id) ON DELETE CASCADE  
 );
 success!
+timestamp: 2016-02-23T15:35:39.043407
+CREATE TABLE auth_user(
+    id INT AUTO_INCREMENT NOT NULL,
+    first_name VARCHAR(128),
+    last_name VARCHAR(128),
+    email VARCHAR(512),
+    password VARCHAR(512),
+    registration_key VARCHAR(512),
+    reset_password_key VARCHAR(512),
+    registration_id VARCHAR(512),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.053536
+CREATE TABLE auth_group(
+    id INT AUTO_INCREMENT NOT NULL,
+    role VARCHAR(512),
+    description LONGTEXT,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.063177
+CREATE TABLE auth_membership(
+    id INT AUTO_INCREMENT NOT NULL,
+    user_id INT  , INDEX user_id__idx (user_id), FOREIGN KEY (user_id) REFERENCES auth_user (id) ON DELETE CASCADE,
+    group_id INT  , INDEX group_id__idx (group_id), FOREIGN KEY (group_id) REFERENCES auth_group (id) ON DELETE CASCADE,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.075357
+CREATE TABLE auth_permission(
+    id INT AUTO_INCREMENT NOT NULL,
+    group_id INT  , INDEX group_id__idx (group_id), FOREIGN KEY (group_id) REFERENCES auth_group (id) ON DELETE CASCADE,
+    name VARCHAR(512),
+    table_name VARCHAR(512),
+    record_id INT,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.094093
+CREATE TABLE auth_event(
+    id INT AUTO_INCREMENT NOT NULL,
+    time_stamp DATETIME,
+    client_ip VARCHAR(512),
+    user_id INT  , INDEX user_id__idx (user_id), FOREIGN KEY (user_id) REFERENCES auth_user (id) ON DELETE CASCADE,
+    origin VARCHAR(512),
+    description LONGTEXT,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.104655
+CREATE TABLE auth_cas(
+    id INT AUTO_INCREMENT NOT NULL,
+    user_id INT  , INDEX user_id__idx (user_id), FOREIGN KEY (user_id) REFERENCES auth_user (id) ON DELETE CASCADE,
+    created_on DATETIME,
+    service VARCHAR(512),
+    ticket VARCHAR(512),
+    renew CHAR(1),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.115180
+CREATE TABLE discipline(
+    id INT AUTO_INCREMENT NOT NULL,
+    libelle VARCHAR(512),
+    olympique VARCHAR(512),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.125373
+CREATE TABLE ligue(
+    id INT AUTO_INCREMENT NOT NULL,
+    nom VARCHAR(512),
+    adresseRue VARCHAR(512),
+    ville VARCHAR(512),
+    cp VARCHAR(512),
+    tel VARCHAR(512),
+    URLSiteWeb VARCHAR(512),
+    emailContact VARCHAR(512),
+    idDiscipline INT  , INDEX idDiscipline__idx (idDiscipline), FOREIGN KEY (idDiscipline) REFERENCES discipline (id) ON DELETE CASCADE,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.150465
+CREATE TABLE categorie(
+    id INT AUTO_INCREMENT NOT NULL,
+    nom VARCHAR(512),
+    admin_email VARCHAR(512),
+    heureOuverture INT,
+    heureOuvertureMinutes INT,
+    heureFermeture INT,
+    heureFermetureMinutes INT,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.161123
+CREATE TABLE salle(
+    id INT AUTO_INCREMENT NOT NULL,
+    nom VARCHAR(512),
+    capacite INT,
+    disponible INT,
+    categorie_id INT  , INDEX categorie_id__idx (categorie_id), FOREIGN KEY (categorie_id) REFERENCES categorie (id) ON DELETE CASCADE,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
+timestamp: 2016-02-23T15:35:39.171824
+CREATE TABLE reservation(
+    id INT AUTO_INCREMENT NOT NULL,
+    etat INT,
+    dateDebut DATETIME,
+    dateFin DATETIME,
+    salle_id INT  , INDEX salle_id__idx (salle_id), FOREIGN KEY (salle_id) REFERENCES salle (id) ON DELETE CASCADE,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB CHARACTER SET utf8;
+success!
