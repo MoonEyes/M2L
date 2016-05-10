@@ -1,7 +1,7 @@
-{{extend 'layout.html'}}
-{{if 'rowsSalles' in globals():}}
+{{extend 'plugin_jqmobile/layout.html'}}
+{{if 'trieSalles' in globals():}}
 
-{{if len(response._vars['rowsSalles']) !=0 :}}
+{{if len(response._vars['trieSalles']) !=0 :}}
 
 <br/>
 Liste des salles </u> 
@@ -9,13 +9,19 @@ Liste des salles </u>
 <table class='table'>
 <tr>
 <td><h6>Nom</h6></td>
-<td><h6>Categorie</h6></td>
+<td><h6>Capacité</h6></td>
+<td><h6>Catégorie</h6></td>
+<td><h6>Heure d'ouverture</h6></td>
+<td><h6>Visualiser les reservations</h6></td>
 </tr>
-{{for uneSalle in response._vars['rowsSalles']:}}
+{{for uneSalle in response._vars['trieSalles']:}}
 
 <tr>
 <td><i>{{=uneSalle.salle.nom}}</i></td>
+<td><i> {{=uneSalle.salle.capacite}}</i></td>
 <td><i> {{=uneSalle.categorie.nom}}</i></td>
+<td><i> {{if uneSalle.categorie.heureOuverture<10:}}0{{pass}}{{=uneSalle.categorie.heureOuverture}}:{{if uneSalle.categorie.heureOuvertureMinutes<10:}}0{{pass}}{{=uneSalle.categorie.heureOuvertureMinutes}}</i></td>
+<td><i>{{=A(B('Voir les reservations'),_href=URL('ctrl_salle','visualiserReservation2',vars=dict(salle=uneSalle.salle.id)))}}</i></td>
 <td><h6>
 {{=A(B('Modifier'),_href=URL('ctrl_salle','modifierSalle',vars=dict(salle=uneSalle.salle.id)))}}
 </h6></td>

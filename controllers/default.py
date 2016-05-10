@@ -34,7 +34,12 @@ def user():
     to decorate functions that need access control
     """
     return dict(form=auth())
-
+	
+def personnel():
+	"""
+	Notre Personnel
+	"""
+	return locals()
 
 
 @cache.action()

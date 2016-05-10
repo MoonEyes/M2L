@@ -6,8 +6,9 @@ def afficherLesSalles():
     """
     Fournit à la vue HTML la liste de toutes les salles avec l'ensemble des informations
     """
-    rowsSalles =db(db.salle.categorie_id==db.categorie.id).select(db.salle.id,db.salle.nom,db.categorie.nom) #requête permettant de récupérer les informations des salles
-
+    rowsSalles =db(db.salle.categorie_id==db.categorie.id).select(db.salle.capacite,db.categorie.nom,db.salle.id,db.salle.nom,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes) #requête permettant de récupérer les informations des salles
+    trieSalles =db(db.salle.categorie_id==db.categorie.id).select(db.salle.capacite,db.categorie.nom,db.salle.id,db.salle.nom,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes, orderby=db.categorie.nom|~db.salle.capacite )#requête permettant de récupérer les informations des salles et les trier par capacité et catégorie
+    
     return locals()
 
 #------------------------------------------------------------------------------------#
@@ -26,7 +27,7 @@ def afficherSallesCategorie():
     nomCateg=rowCateg[0].nom
     
     # requête permettant de sélectionner les salles de la catégorie précédemment sélectionnée
-    rowsSalles =db((db.salle.categorie_id==uneCategorie)).select(db.salle.ALL)
+    rowsSalles =db((db.salle.categorie_id==uneCategorie==db.categorie.id)).select(db.salle.ALL,db.categorie.heureOuverture,db.categorie.heureOuvertureMinutes,db.categorie.heureFermeture,db.categorie.heureFermetureMinutes,db.categorie.nom, orderby=~db.salle.capacite)
 
     return locals()
 
@@ -177,5 +178,16 @@ def visualiserReservation():
 
     # requête de sélection des réservations correspondant à la date choisie
     rowsResa=db((((db.reservation.dateDebut.year() == dateRecherchee.year) & (db.reservation.dateDebut.day() == dateRecherchee.day) & (db.reservation.dateDebut.month() == dateRecherchee.month))|((db.reservation.dateFin.year() == dateRecherchee.year) & (db.reservation.dateFin.day() == dateRecherchee.day) & (db.reservation.dateFin.month() == dateRecherchee.month)))).select(db.reservation.ALL)
+    
+    return locals()
+@auth.requires_login()
+def visualiserReservation2():
+    """
+    Fournit à la vue la liste des réservations correspondant au nom sélectionnée.
+    """
+    idSalleR = request.vars['salle']
+
+    # requête de sélection des réservations correspondant à la date choisie
+    rowsResa=db(db.reservation.salle_id() == idSalleR).select(db.reservation.id, db.reservation.dateDebut, db.reservation.dateFin)
     
     return locals()

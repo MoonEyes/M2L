@@ -1,0 +1,31 @@
+{{extend 'plugin_jqmobile/layout.html'}}
+{{if 'rowsResa' in globals():}}
+
+{{if len(response._vars['rowsResa']) !=0 :}}
+
+<br/>
+Réservations de la salle <b>{{=uneResa.salle_id}} </b>
+
+<table class='table'>
+<tr>
+<td><h6>Date de début</h6></td>
+<td><h6>Date de fin</h6></td>
+<td><h6>Salle</h6></td>
+</tr>
+{{for uneResa in response._vars['rowsResa']:}}
+
+<tr>
+<td><i>{{=uneResa.dateDebut.strftime("%d/%m/%Y %H:%M")}}</i></td>
+<td><i> {{=uneResa.dateFin.strftime("%d/%m/%Y %H:%M")}}</i></td>
+<td><i> {{=uneResa.salle_id}}</i></td>
+ </tr>
+{{pass}}
+</table>
+<br/>
+{{else:}}
+
+Aucune réservation n'est enregistré pour la salle {{=(request.vars['salle'])}} 
+{{pass}}
+{{else:}}
+{{=BEAUTIFY(response._vars)}}
+{{pass}}
